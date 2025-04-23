@@ -4,27 +4,42 @@ from scraper_engine import run_all_scrapers
 from filter_engine import filter_leads
 from mailer.send_mail import send_email
 from email_formatter import format_email_body
+import os
+
+DB_PATH = "db/filters.db"
+
+def init_db_if_missing():
+    if not os.path.exists(DB_PATH):
+        print("⚠️ filters.db not found — creating new one.")
+        conn = sqlite3.connect(DB_PATH)
+        c = conn.cursor()
+        c.execute('''
+        CREATE TABLE filters (
+            email TEXT PRIMARY KEY,
+            valuation_min INTEGER,
+            min_stories INTEGER,
+            keywords TEXT
+        )''')
+        # Optional: Seed a test user
+        c.execute('''
+        INSERT INTO filters (email, valuation_min, min_stories, keywords)
+        VALUES (?, ?, ?, ?)''', (
+            "test@example.com", 25, 3, "data center, fireproofing, steel"
+        ))
+        conn.commit()
+        conn.close()
+    else:
+        print("✅ filters.db found — using existing.")
 
 def run_daily_pipeline():
     print("🚀 Starting daily pipeline...")
-    
+    init_db_if_missing()
+
     with open("auth/allowed_users.yaml") as f:
         user_data = yaml.safe_load(f)
 
-    conn = sqlite3.connect("/db/filters.db")
-
+    conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
-
-    # ✅ Ensure the filters table exists BEFORE querying it
-    c.execute('''
-    CREATE TABLE IF NOT EXISTS filters (
-        email TEXT PRIMARY KEY,
-        valuation_min INTEGER,
-        min_stories INTEGER,
-        keywords TEXT
-    )
-    ''')
-    conn.commit()
 
     for email, user_info in user_data.items():
         print(f"👤 Checking filters for: {email}")
@@ -69,4 +84,3 @@ def run_daily_pipeline():
 # Run if script is executed directly
 if __name__ == "__main__":
     run_daily_pipeline()
-
