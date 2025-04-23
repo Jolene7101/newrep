@@ -2,7 +2,8 @@ import requests
 from bs4 import BeautifulSoup
 from scraper_utils import get_random_user_agent, log_error, log_info
 
-def scrape_gc_site(gc_name, proxy=None):
+def scrape_gc_site(gc_name, proxy=None, ignore_ssl=False):
+    """Scrapes the specified GC site. Set ignore_ssl=True to skip SSL verification (for self-signed certs)."""
     urls = {
         "JE Dunn": "https://jedunn.com/projects",
         "Turner": "https://www.turnerconstruction.com/experience",
