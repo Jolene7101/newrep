@@ -16,9 +16,9 @@ def get_active_proxy():
     except Exception:
         return PROXY
 
-def run_all_scrapers(user_filters, enabled_sources, creds):
+def run_all_scrapers(user_filters, enabled_sources, creds, proxy_override=None):
     all_projects = []
-    proxy = get_active_proxy()
+    proxy = proxy_override if proxy_override else get_active_proxy()
 
     if enabled_sources.get("linkedin"):
         linkedin_projects = scrape_linkedin_posts(user_filters["keywords"].split(","))

@@ -33,13 +33,20 @@ def show_leads(user):
         st.error("No scraper credentials found for this user. Please contact admin.")
         return
 
-    # Set enabled sources (for now, enable all)
-    enabled_sources = {"dodge": True, "linkedin": True, "gc_sites": True}
+    # Set enabled sources from filters table
+    enabled_sources = {
+        "gc_sites": bool(row[4]),
+        "linkedin": bool(row[5]),
+        "twitter": bool(row[6]),
+        "google_news": bool(row[7]),
+        "reddit": bool(row[8]),
+    }
+    proxy_override = row[9] if len(row) > 9 else None
 
     # Run scrapers and display results
     with st.spinner("Scraping latest projects... this may take up to a minute."):
         try:
-            results = run_all_scrapers(user_filters, enabled_sources, creds)
+            results = run_all_scrapers(user_filters, enabled_sources, creds, proxy_override)
         except Exception as e:
             st.error(f"Scraper error: {e}")
             return
