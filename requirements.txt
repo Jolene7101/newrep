@@ -1,6 +1,6 @@
 streamlit
 pyyaml
 requests
-playwright==1.51.0
-requests
 beautifulsoup4
+snscrape
+praw
