@@ -14,6 +14,17 @@ def run_daily_pipeline():
     conn = sqlite3.connect("db/filters.db")
     c = conn.cursor()
 
+    # ✅ Ensure the filters table exists BEFORE querying it
+    c.execute('''
+    CREATE TABLE IF NOT EXISTS filters (
+        email TEXT PRIMARY KEY,
+        valuation_min INTEGER,
+        min_stories INTEGER,
+        keywords TEXT
+    )
+    ''')
+    conn.commit()
+
     for email, user_info in user_data.items():
         print(f"👤 Checking filters for: {email}")
         c.execute("SELECT * FROM filters WHERE email = ?", (email,))
@@ -57,3 +68,4 @@ def run_daily_pipeline():
 # Run if script is executed directly
 if __name__ == "__main__":
     run_daily_pipeline()
+
