@@ -3,7 +3,8 @@ services:
     name: hot-project-ui
     env: python
     buildCommand: pip install -r requirements.txt
-    startCommand: streamlit run app/main.py --server.port=$PORT
+    startCommand: streamlit run main.py --server.port=$PORT
+
     envVars:
       - key: MAILGUN_API_KEY
         sync: false
