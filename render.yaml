@@ -1,8 +1,10 @@
- services:
+services:
   - type: web
     name: hot-project-ui
     env: python
-    buildCommand: pip install -r requirements.txt
+    buildCommand: |
+      pip install -r requirements.txt
+      playwright install --with-deps
     startCommand: streamlit run main.py --server.port=$PORT
     envVars:
       - key: MAILGUN_API_KEY
@@ -15,11 +17,10 @@
     env: python
     buildCommand: |
       pip install -r requirements.txt
-      playwright install
+      playwright install --with-deps
     startCommand: python run_daily_pipeline.py
     envVars:
       - key: MAILGUN_API_KEY
         sync: false
       - key: MAILGUN_DOMAIN
         sync: false
-
