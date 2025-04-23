@@ -1,7 +1,10 @@
 import yaml
 import certifi
 import os
+import urllib3
 os.environ['REQUESTS_CA_BUNDLE'] = certifi.where()
+os.environ['SSL_CERT_FILE'] = certifi.where()
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 import sqlite3
 
 from scraper_engine import run_all_scrapers
@@ -73,11 +76,14 @@ def run_daily_pipeline():
             print(f"📌 Match: {proj.get('title')}")
 
         msg = format_email_body(user_info["name"], matched)
+        mailgun_api_key = user_info.get("mailgun_api")
+        if not mailgun_api_key:
+            raise KeyError(f"mailgun_api key missing for user {user_info.get('email', 'unknown')}. Please check allowed_users.yaml or credentials source.")
         send_email(
             to_email=email,
             subject="🔥 Your Daily Project Matches",
             text=msg,
-            mailgun_api_key=user_info["mailgun_api"],
+            mailgun_api_key=mailgun_api_key,
             domain=user_info["mailgun_domain"]
         )
         print(f"📧 Email sent to {email}")

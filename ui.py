@@ -1,7 +1,10 @@
 import certifi
 import os
+import urllib3
 os.environ['REQUESTS_CA_BUNDLE'] = certifi.where()
-
+os.environ['SSL_CERT_FILE'] = certifi.where()
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+import streamlit as st
 from run_daily_pipeline import run_daily_pipeline
 from proxy_ui import proxy_selector_ui, get_selected_proxy
 
