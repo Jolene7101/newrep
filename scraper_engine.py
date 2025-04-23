@@ -26,7 +26,7 @@ def run_all_scrapers(user_filters, enabled_sources, creds, proxy_override=None):
 
     if enabled_sources.get("gc_sites"):
         for gc_name in ["JE Dunn", "Turner", "Skanska"]:
-            gc_projects = scrape_gc_site(gc_name, proxy=proxy)
+            gc_projects = scrape_gc_site(gc_name, proxy=proxy, ignore_ssl=True)
             all_projects.extend(gc_projects)
 
     if enabled_sources.get("twitter"):

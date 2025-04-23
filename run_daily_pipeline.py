@@ -2,6 +2,7 @@ import yaml
 import certifi
 import os
 os.environ['REQUESTS_CA_BUNDLE'] = certifi.where()
+import sqlite3
 
 from scraper_engine import run_all_scrapers
 from filter_engine import filter_leads
