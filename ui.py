@@ -1,4 +1,5 @@
 import streamlit as st
+from run_daily_pipeline import run_daily_pipeline
 
 def styled_container(title, content):
     st.markdown(f"""
@@ -18,3 +19,12 @@ def display_dashboard_card(title, value, icon="📊"):
         </div>
     </div>
     """, unsafe_allow_html=True)
+
+# --- Daily Pipeline Trigger Button ---
+if st.button("Run Daily Now"):
+    with st.spinner("Running daily scraping and email pipeline... this may take a minute."):
+        try:
+            run_daily_pipeline()
+            st.success("Daily pipeline completed! Check logs and your email for results.")
+        except Exception as e:
+            st.error(f"Pipeline failed: {e}")
