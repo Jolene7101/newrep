@@ -11,7 +11,8 @@ def run_daily_pipeline():
     with open("auth/allowed_users.yaml") as f:
         user_data = yaml.safe_load(f)
 
-    conn = sqlite3.connect("db/filters.db")
+    conn = sqlite3.connect("/db/filters.db")
+
     c = conn.cursor()
 
     # ✅ Ensure the filters table exists BEFORE querying it
