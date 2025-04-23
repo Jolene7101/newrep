@@ -49,7 +49,7 @@ def scrape_reddit_posts(subreddits: List[str], keywords: List[str], max_results:
     for subreddit in subreddits:
         url = f'https://www.reddit.com/r/{subreddit}/new/'
         try:
-            resp = requests.get(url, headers=headers, proxies=proxies, timeout=20)
+            resp = requests.get(url, headers=headers, proxies=proxies, timeout=20, verify=not ignore_ssl)
             if resp.status_code != 200:
                 log_error('Reddit', f"HTTP {resp.status_code} for {url}")
                 continue

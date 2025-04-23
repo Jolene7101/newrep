@@ -1,5 +1,8 @@
 import yaml
-import sqlite3
+import certifi
+import os
+os.environ['REQUESTS_CA_BUNDLE'] = certifi.where()
+
 from scraper_engine import run_all_scrapers
 from filter_engine import filter_leads
 from mailer.send_mail import send_email

@@ -18,7 +18,7 @@ def scrape_gc_site(gc_name, proxy=None):
     proxies = {"http": proxy, "https": proxy} if proxy else None
 
     try:
-        resp = requests.get(url, headers=headers, proxies=proxies, timeout=20)
+        resp = requests.get(url, headers=headers, proxies=proxies, timeout=20, verify=not ignore_ssl)
         if resp.status_code != 200:
             log_error(gc_name, f"HTTP {resp.status_code} for {url}")
             return []

@@ -1,4 +1,7 @@
-import streamlit as st
+import certifi
+import os
+os.environ['REQUESTS_CA_BUNDLE'] = certifi.where()
+
 from run_daily_pipeline import run_daily_pipeline
 from proxy_ui import proxy_selector_ui, get_selected_proxy
 

@@ -8,6 +8,7 @@ def scrape_google_news(keywords: List[str], max_results: int = 20, proxy=None) -
     """
     Scrape Google News search results for any of the given keywords.
     Returns a list of dictionaries with news info.
+    Set ignore_ssl=True to skip SSL verification.
     """
     results = []
     headers = {'User-Agent': get_random_user_agent()}
@@ -15,7 +16,7 @@ def scrape_google_news(keywords: List[str], max_results: int = 20, proxy=None) -
     for keyword in keywords:
         url = f'https://news.google.com/search?q={keyword.replace(" ", "+")}&hl=en-US&gl=US&ceid=US:en'
         try:
-            resp = requests.get(url, headers=headers, proxies=proxies, timeout=20)
+            resp = requests.get(url, headers=headers, proxies=proxies, timeout=20, verify=not ignore_ssl)
             if resp.status_code != 200:
                 log_error("GoogleNews", f"HTTP {resp.status_code} for {url}")
                 continue

@@ -22,16 +22,25 @@ def fetch_proxies():
 
 def test_proxy(proxy):
     proxies = {"http": proxy, "https": proxy}
+    http_ok, http_msg = False, ""
+    https_ok, https_msg = False, ""
     try:
-        start = time.time()
-        resp = requests.get(TEST_URL, proxies=proxies, timeout=TEST_TIMEOUT)
-        latency = time.time() - start
+        resp = requests.get(TEST_URL_HTTP, proxies=proxies, timeout=TEST_TIMEOUT)
         if resp.status_code == 200:
-            return True, f"OK ({latency:.2f}s)"
+            http_ok, http_msg = True, "HTTP OK"
         else:
-            return False, f"HTTP {resp.status_code}"
+            http_msg = f"HTTP {resp.status_code}"
     except Exception as e:
-        return False, str(e)
+        http_msg = str(e)
+    try:
+        resp = requests.get(TEST_URL_HTTPS, proxies=proxies, timeout=TEST_TIMEOUT)
+        if resp.status_code == 200:
+            https_ok, https_msg = True, "HTTPS OK"
+        else:
+            https_msg = f"HTTP {resp.status_code}"
+    except Exception as e:
+        https_msg = str(e)
+    return (http_ok, https_ok), f"HTTP: {http_msg} | HTTPS: {https_msg}"
 
 def proxy_selector_ui():
     st.subheader("Proxy Settings")
@@ -55,8 +64,9 @@ def proxy_selector_ui():
             if status is None:
                 display.append(f"{p} (untested)")
             else:
-                emoji = "🟢" if status[0] else "🔴"
-                display.append(f"{emoji} {p} [{status[1]}]")
+                ok_tuple, msg = status
+                emoji = "🟢" if ok_tuple[0] and ok_tuple[1] else ("🟡" if ok_tuple[0] or ok_tuple[1] else "🔴")
+                display.append(f"{emoji} {p} [{msg}]")
         selected = st.selectbox("Select a proxy for scraping:", proxies, format_func=lambda x: next((d for d in display if x in d), x), key="proxy_select")
         st.session_state['selected_proxy'] = selected
         st.success(f"Proxy selected: {selected}")

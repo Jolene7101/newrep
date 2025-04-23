@@ -63,8 +63,9 @@ def show_filter_form(user):
             if status is None:
                 display.append(f"{p} (untested)")
             else:
-                emoji = "🟢" if status[0] else "🔴"
-                display.append(f"{emoji} {p} [{status[1]}]")
+                ok_tuple, msg = status
+                emoji = "🟢" if ok_tuple[0] and ok_tuple[1] else ("🟡" if ok_tuple[0] or ok_tuple[1] else "🔴")
+                display.append(f"{emoji} {p} [{msg}]")
         proxy = st.selectbox("Select a proxy for scraping:", proxies, format_func=lambda x: next((d for d in display if x in d), x), key="form_proxy_select", index=proxies.index(proxy) if proxy in proxies else 0)
     else:
         proxy = ""
