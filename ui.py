@@ -1,5 +1,6 @@
 import streamlit as st
 from run_daily_pipeline import run_daily_pipeline
+from proxy_ui import proxy_selector_ui, get_selected_proxy
 
 def styled_container(title, content):
     st.markdown(f"""
@@ -20,10 +21,14 @@ def display_dashboard_card(title, value, icon="📊"):
     </div>
     """, unsafe_allow_html=True)
 
+proxy_selector_ui()
+
 # --- Daily Pipeline Trigger Button ---
 if st.button("Run Daily Now"):
+    selected_proxy = get_selected_proxy()
     with st.spinner("Running daily scraping and email pipeline... this may take a minute."):
         try:
+            st.session_state['pipeline_proxy'] = selected_proxy
             run_daily_pipeline()
             st.success("Daily pipeline completed! Check logs and your email for results.")
         except Exception as e:
