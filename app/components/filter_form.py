@@ -1,5 +1,6 @@
 import streamlit as st
 import sqlite3
+from proxy_ui import fetch_proxies, test_proxy
 
 def show_filter_form(user):
     st.header("🔍 Your Project Filters")
@@ -41,9 +42,33 @@ def show_filter_form(user):
     source_google_news = st.checkbox("Google News", value=source_google_news)
     source_reddit = st.checkbox("Reddit", value=source_reddit)
 
-    st.subheader("Proxy (Optional)")
-    proxy = st.text_input("Proxy (leave blank for none or use selector in main UI)", value=proxy)
-    st.info("You can also use the proxy selector in the main dashboard UI.")
+    st.subheader("Proxy Selection (Optional)")
+    if st.button("Load Free Proxies", key="form_load_proxies"):
+        st.session_state['form_proxies'] = fetch_proxies()
+        st.session_state['form_proxy_health'] = {}
+    proxies = st.session_state.get('form_proxies', [])
+    proxy_health = st.session_state.get('form_proxy_health', {})
+    if proxies:
+        if st.button("Test All Proxies", key="form_test_proxies"):
+            health = {}
+            with st.spinner("Testing proxies..."):
+                for p in proxies[:20]:
+                    ok, msg = test_proxy(p)
+                    health[p] = (ok, msg)
+            st.session_state['form_proxy_health'] = health
+            proxy_health = health
+        display = []
+        for p in proxies:
+            status = proxy_health.get(p)
+            if status is None:
+                display.append(f"{p} (untested)")
+            else:
+                emoji = "🟢" if status[0] else "🔴"
+                display.append(f"{emoji} {p} [{status[1]}]")
+        proxy = st.selectbox("Select a proxy for scraping:", proxies, format_func=lambda x: next((d for d in display if x in d), x), key="form_proxy_select", index=proxies.index(proxy) if proxy in proxies else 0)
+    else:
+        proxy = ""
+        st.info("No proxies loaded. Click 'Load Free Proxies' to fetch.")
 
     if st.button("💾 Save Filters"):
         c.execute("REPLACE INTO filters VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
