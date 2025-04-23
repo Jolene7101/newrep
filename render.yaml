@@ -1,10 +1,9 @@
-services:
+ services:
   - type: web
     name: hot-project-ui
     env: python
     buildCommand: pip install -r requirements.txt
     startCommand: streamlit run main.py --server.port=$PORT
-
     envVars:
       - key: MAILGUN_API_KEY
         sync: false
@@ -14,10 +13,13 @@ services:
   - type: worker
     name: hot-project-scheduler
     env: python
-    buildCommand: pip install -r requirements.txt
+    buildCommand: |
+      pip install -r requirements.txt
+      playwright install
     startCommand: python run_daily_pipeline.py
     envVars:
       - key: MAILGUN_API_KEY
         sync: false
       - key: MAILGUN_DOMAIN
         sync: false
+
