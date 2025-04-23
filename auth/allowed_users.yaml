@@ -1,2 +1,8 @@
 test@example.com:
   name: Test User
+
+blake.mueller@saint-gobain.com:
+  name: Blake Mueller
+  DODGE_EMAIL: "blake.mueller@saint-gobain.com"
+  DODGE_PASSWORD: "Tomorrow5665"
+  password: "Tomorrow5665"
