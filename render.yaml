@@ -4,7 +4,7 @@ services:
     env: python
     buildCommand: |
       pip install -r requirements.txt
-      playwright install --with-deps
+      playwright install chromium
     startCommand: streamlit run main.py --server.port=$PORT
     envVars:
       - key: MAILGUN_API_KEY
@@ -17,7 +17,7 @@ services:
     env: python
     buildCommand: |
       pip install -r requirements.txt
-      playwright install --with-deps
+      playwright install chromium
     startCommand: python run_daily_pipeline.py
     envVars:
       - key: MAILGUN_API_KEY
