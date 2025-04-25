@@ -7,3 +7,4 @@ praw
 cloudscraper
 requests-html
 mitmproxy
+lxml[html_clean]
