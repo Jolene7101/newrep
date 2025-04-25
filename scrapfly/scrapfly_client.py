@@ -14,6 +14,7 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv()
 SCRAPFLY_KEY = os.getenv("SCRAPFLY_API_KEY", "scp-live-bbfcca9cd67c4dfb993c7ed2a7419b28")
+USER_EMAIL = "blake.mueller@saint-gobain.com"  # User identifier for tracking
 
 if not SCRAPFLY_KEY:
     logging.error("Missing SCRAPFLY_API_KEY in .env file")
@@ -41,7 +42,8 @@ def scrapfly_get(url: str, extract_rules: Optional[Dict[str, Any]] = None, **kwa
         "asp": True,        # Auto proxy rotation
         "country": "us",    # Force US-based proxies
         "ttl": 3600,        # Cache identical requests for 1 hour
-        "tags": "fireproofing_leads"
+        "tags": "fireproofing_leads",
+        "meta": {"user": USER_EMAIL}  # Add user identifier for tracking
     }
     
     # Add extraction rules if provided

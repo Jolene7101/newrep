@@ -22,19 +22,25 @@ logger = logging.getLogger(__name__)
 PROXY = None  # e.g., 'http://username:password@proxyhost:port'
 PRAW_CREDS = None  # e.g., {'client_id': '...', 'client_secret': '...', 'user_agent': '...', ...}
 
-# Check if Scrapfly is available
+# Check if Scrapfly is available - first try the new integrated version
 try:
-    from fireproofai.lead_sources.scrapfly.scrapfly_client import ScrapflyClient
-    from fireproofai.lead_sources.scrapfly.linkedin_scraper import LinkedInScraper
-    from fireproofai.lead_sources.scrapfly.twitter_scraper import TwitterScraper
-    from fireproofai.lead_sources.scrapfly.reddit_scraper import RedditScraper
-    from fireproofai.lead_sources.scrapfly.google_news_scraper import GoogleNewsScraper
-    from fireproofai.lead_sources.scrapfly.gc_scraper import GCScraper
+    from integrate_scrapfly import get_scrapfly_leads
     SCRAPFLY_AVAILABLE = True
-    logger.info("Scrapfly integration is available and will be used as primary scraper")
+    logger.info("New Scrapfly integration is available and will be used as primary scraper")
 except ImportError as e:
-    SCRAPFLY_AVAILABLE = False
-    logger.warning(f"Scrapfly integration not available: {e}. Will use direct scrapers instead.")
+    # Fall back to older Scrapfly integration if available
+    try:
+        from fireproofai.lead_sources.scrapfly.scrapfly_client import ScrapflyClient
+        from fireproofai.lead_sources.scrapfly.linkedin_scraper import LinkedInScraper
+        from fireproofai.lead_sources.scrapfly.twitter_scraper import TwitterScraper
+        from fireproofai.lead_sources.scrapfly.reddit_scraper import RedditScraper
+        from fireproofai.lead_sources.scrapfly.google_news_scraper import GoogleNewsScraper
+        from fireproofai.lead_sources.scrapfly.gc_scraper import GCScraper
+        SCRAPFLY_AVAILABLE = True
+        logger.info("Legacy Scrapfly integration is available and will be used as primary scraper")
+    except ImportError as e2:
+        SCRAPFLY_AVAILABLE = False
+        logger.warning(f"Scrapfly integration not available: {e2}. Will use direct scrapers instead.")
 
 def get_active_proxy():
     """Get the active proxy configuration, preferring Streamlit session state if available."""
@@ -89,90 +95,101 @@ def run_all_scrapers(user_filters, enabled_sources, creds, proxy_override=None):
     # Try Scrapfly first if available
     if SCRAPFLY_AVAILABLE:
         try:
-            logger.info("Attempting to use Scrapfly for all enabled scrapers")
-            
-            # LinkedIn scraping with Scrapfly
-            if enabled_sources.get("linkedin"):
-                try:
-                    linkedin_scraper = LinkedInScraper()
-                    for keyword in keywords:
-                        try:
-                            logger.info(f"Scraping LinkedIn with Scrapfly for keyword: {keyword}")
-                            results = linkedin_scraper.scrape_posts(keyword)
-                            logger.info(f"Found {len(results)} LinkedIn results for '{keyword}'")
-                            all_projects.extend(results)
-                        except Exception as e:
-                            logger.error(f"LinkedIn Scrapfly scraping failed for '{keyword}': {e}")
-                except Exception as e:
-                    logger.error(f"LinkedIn Scrapfly initialization failed: {e}")
-            
-            # Twitter scraping with Scrapfly
-            if enabled_sources.get("twitter"):
-                try:
-                    twitter_scraper = TwitterScraper()
-                    for keyword in keywords:
-                        try:
-                            logger.info(f"Scraping Twitter with Scrapfly for keyword: {keyword}")
-                            results = twitter_scraper.scrape_tweets(keyword)
-                            logger.info(f"Found {len(results)} Twitter results for '{keyword}'")
-                            all_projects.extend(results)
-                        except Exception as e:
-                            logger.error(f"Twitter Scrapfly scraping failed for '{keyword}': {e}")
-                except Exception as e:
-                    logger.error(f"Twitter Scrapfly initialization failed: {e}")
-            
-            # Reddit scraping with Scrapfly
-            if enabled_sources.get("reddit"):
-                try:
-                    reddit_scraper = RedditScraper()
-                    for keyword in keywords:
-                        try:
-                            logger.info(f"Scraping Reddit with Scrapfly for keyword: {keyword}")
-                            results = reddit_scraper.scrape_posts(keyword)
-                            logger.info(f"Found {len(results)} Reddit results for '{keyword}'")
-                            all_projects.extend(results)
-                        except Exception as e:
-                            logger.error(f"Reddit Scrapfly scraping failed for '{keyword}': {e}")
-                except Exception as e:
-                    logger.error(f"Reddit Scrapfly initialization failed: {e}")
-            
-            # Google News scraping with Scrapfly
-            if enabled_sources.get("google_news"):
-                try:
-                    news_scraper = GoogleNewsScraper()
-                    for keyword in keywords:
-                        try:
-                            logger.info(f"Scraping Google News with Scrapfly for keyword: {keyword}")
-                            results = news_scraper.scrape_news(keyword)
-                            logger.info(f"Found {len(results)} Google News results for '{keyword}'")
-                            all_projects.extend(results)
-                        except Exception as e:
-                            logger.error(f"Google News Scrapfly scraping failed for '{keyword}': {e}")
-                except Exception as e:
-                    logger.error(f"Google News Scrapfly initialization failed: {e}")
-            
-            # GC Sites scraping with Scrapfly
-            if enabled_sources.get("gc_sites"):
-                try:
-                    gc_scraper = GCScraper()
-                    for gc_name in ["JE Dunn", "Turner", "Skanska"]:
-                        try:
-                            logger.info(f"Scraping {gc_name} website with Scrapfly")
-                            results = gc_scraper.scrape_gc_site(gc_name)
-                            if results:
-                                logger.info(f"Found {len(results)} {gc_name} results with Scrapfly")
+            # Check if we have the new integrated version
+            if 'get_scrapfly_leads' in globals():
+                logger.info("Using new integrated Scrapfly scraper")
+                # Use the new integrated Scrapfly scraper that handles all sources
+                all_projects = get_scrapfly_leads(user_filters, enabled_sources, limit_per_source=25)
+                if all_projects:
+                    logger.info(f"New Scrapfly integration returned {len(all_projects)} results")
+                    return all_projects
+                logger.warning("New Scrapfly integration returned no results, falling back to legacy methods")
+            else:
+                # Legacy Scrapfly integration
+                logger.info("Using legacy Scrapfly integration")
+                
+                # LinkedIn scraping with Scrapfly
+                if enabled_sources.get("linkedin"):
+                    try:
+                        linkedin_scraper = LinkedInScraper()
+                        for keyword in keywords:
+                            try:
+                                logger.info(f"Scraping LinkedIn with Scrapfly for keyword: {keyword}")
+                                results = linkedin_scraper.scrape_posts(keyword)
+                                logger.info(f"Found {len(results)} LinkedIn results for '{keyword}'")
                                 all_projects.extend(results)
-                            else:
-                                logger.warning(f"No results found for {gc_name} with Scrapfly")
-                        except Exception as e:
-                            logger.error(f"{gc_name} Scrapfly scraping failed: {str(e)}")
-                except Exception as e:
-                    logger.error(f"GC Scrapfly initialization failed: {e}")
-                    
-            # If we got results from Scrapfly, return results
-            if all_projects:
-                logger.info(f"Scrapfly scraping completed successfully with {len(all_projects)} total results")
-                return all_projects
+                            except Exception as e:
+                                logger.error(f"LinkedIn Scrapfly scraping failed for '{keyword}': {e}")
+                    except Exception as e:
+                        logger.error(f"LinkedIn Scrapfly initialization failed: {e}")
+                
+                # Twitter scraping with Scrapfly
+                if enabled_sources.get("twitter"):
+                    try:
+                        twitter_scraper = TwitterScraper()
+                        for keyword in keywords:
+                            try:
+                                logger.info(f"Scraping Twitter with Scrapfly for keyword: {keyword}")
+                                results = twitter_scraper.scrape_tweets(keyword)
+                                logger.info(f"Found {len(results)} Twitter results for '{keyword}'")
+                                all_projects.extend(results)
+                            except Exception as e:
+                                logger.error(f"Twitter Scrapfly scraping failed for '{keyword}': {e}")
+                    except Exception as e:
+                        logger.error(f"Twitter Scrapfly initialization failed: {e}")
+                
+                # Reddit scraping with Scrapfly
+                if enabled_sources.get("reddit"):
+                    try:
+                        reddit_scraper = RedditScraper()
+                        for keyword in keywords:
+                            try:
+                                logger.info(f"Scraping Reddit with Scrapfly for keyword: {keyword}")
+                                results = reddit_scraper.scrape_posts(keyword)
+                                logger.info(f"Found {len(results)} Reddit results for '{keyword}'")
+                                all_projects.extend(results)
+                            except Exception as e:
+                                logger.error(f"Reddit Scrapfly scraping failed for '{keyword}': {e}")
+                    except Exception as e:
+                        logger.error(f"Reddit Scrapfly initialization failed: {e}")
+                
+                # Google News scraping with Scrapfly
+                if enabled_sources.get("google_news"):
+                    try:
+                        news_scraper = GoogleNewsScraper()
+                        for keyword in keywords:
+                            try:
+                                logger.info(f"Scraping Google News with Scrapfly for keyword: {keyword}")
+                                results = news_scraper.scrape_news(keyword)
+                                logger.info(f"Found {len(results)} Google News results for '{keyword}'")
+                                all_projects.extend(results)
+                            except Exception as e:
+                                logger.error(f"Google News Scrapfly scraping failed for '{keyword}': {e}")
+                    except Exception as e:
+                        logger.error(f"Google News Scrapfly initialization failed: {e}")
+                
+                # GC Sites scraping with Scrapfly
+                if enabled_sources.get("gc_sites"):
+                    try:
+                        gc_scraper = GCScraper()
+                        for gc_name in ["JE Dunn", "Turner", "Skanska"]:
+                            try:
+                                logger.info(f"Scraping {gc_name} website with Scrapfly")
+                                results = gc_scraper.scrape_gc_site(gc_name)
+                                if results:
+                                    logger.info(f"Found {len(results)} {gc_name} results with Scrapfly")
+                                    all_projects.extend(results)
+                                else:
+                                    logger.warning(f"No results found for {gc_name} with Scrapfly")
+                            except Exception as e:
+                                logger.error(f"{gc_name} Scrapfly scraping failed: {str(e)}")
+                    except Exception as e:
+                        logger.error(f"GC Scrapfly initialization failed: {e}")
+                        
+                # If we got results from Scrapfly, return results
+                if all_projects:
+                    logger.info(f"Scrapfly scraping completed successfully with {len(all_projects)} total results")
+                    return all_projects
                 
         except Exception as e:
             logger.error(f"Error during Scrapfly scraping: {e}")
