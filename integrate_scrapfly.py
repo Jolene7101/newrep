@@ -24,6 +24,8 @@ logger = logging.getLogger(__name__)
 def get_scrapfly_leads(
     user_filters: Dict[str, Any],
     enabled_sources: Dict[str, bool],
+    creds: Dict[str, Any] = None,  # Added for compatibility with run_all_scrapers signature
+    proxy_override: str = None,  # Added for compatibility with run_all_scrapers signature
     limit_per_source: int = 20
 ) -> List[Dict[str, Any]]:
     """
@@ -37,14 +39,22 @@ def get_scrapfly_leads(
     Returns:
         List of lead data compatible with the UI
     """
+    # Log what we're doing
+    logger.info(f"Running Scrapfly lead scraper with filters: {user_filters}")
+    logger.info(f"Enabled sources: {enabled_sources}")
+    
     # Extract keywords and states from user filters
     keywords = user_filters.get("keywords", [])
     if isinstance(keywords, str):
         keywords = [k.strip() for k in keywords.split(",") if k.strip()]
+    if not keywords:
+        logger.warning("No keywords specified in user filters")
+        keywords = ["fireproofing", "steel construction", "spray applied"]
     
     states = user_filters.get("states", [])
     if isinstance(states, str):
         states = [s.strip() for s in states.split(",") if s.strip()]
+    logger.info(f"Filtering for states: {states}")
     
     logger.info(f"Getting leads with Scrapfly for keywords: {keywords}, states: {states}")
     
@@ -53,15 +63,20 @@ def get_scrapfly_leads(
         # If states are provided, we'll create custom state-specific search terms
         state_terms = []
         for state in states:
+            state = state.strip()
             if len(state) == 2:  # State abbreviation
                 state_terms.append(state)
-            else:  # Full state name
-                state_terms.append(state)
+            else:  # Full state name - add both the name and any quoted strings
+                clean_state = state.replace('(', '').replace(')', '').strip()
+                state_terms.append(clean_state)
         
-        # Add state terms to all searches
-        context_terms = ["construction", "project"] + state_terms
+        # Add state terms to all searches - keeping the list short for better relevance
+        context_terms = ["construction", "project"] + state_terms[:3]  # Limit to 3 states in search context
+        logger.info(f"Using state-specific context terms: {context_terms}")
     else:
-        context_terms = ["construction", "project"]
+        # If no states specified, use general construction terms
+        context_terms = ["construction", "project", "building"]
+        logger.info("No state filters specified, using general context terms")
     
     # Determine which sources to scrape
     sources = []
@@ -129,6 +144,7 @@ def get_scrapfly_leads(
     ui_compatible_results = []
     
     for result in all_results:
+        # Map fields to UI format
         ui_result = {
             "source": result.get("source", "unknown"),
             "title": result.get("title", ""),
@@ -139,9 +155,19 @@ def get_scrapfly_leads(
             "state": result.get("state", ""),
             "project_types": result.get("project_types", [])
         }
+        
+        # Print some debug info about state detection
+        if ui_result["state"]:
+            logger.info(f"Detected state '{ui_result['state']}' in result: {ui_result['title']}")
+            
         ui_compatible_results.append(ui_result)
     
     # Apply any additional filtering based on user filters
     filtered_results = filter_leads(ui_compatible_results, user_filters)
     
+    # Provide feedback on filtering results
+    if len(filtered_results) < len(ui_compatible_results):
+        logger.info(f"Filtering reduced results from {len(ui_compatible_results)} to {len(filtered_results)}")
+    
+    logger.info(f"Returning {len(filtered_results)} total leads from Scrapfly")
     return filtered_results
