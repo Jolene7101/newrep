@@ -18,9 +18,8 @@ def show_leads(user):
 
     # Load user filters
     user_filters = {
-        "valuation_min": row[1],
-        "min_stories": row[2],
-        "keywords": row[3]
+        "states": str(row[1]) if row else "",
+        "keywords": str(row[2]) if row else ""
     }
 
     # Load credentials for the user

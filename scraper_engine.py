@@ -19,9 +19,14 @@ def get_active_proxy():
 def run_all_scrapers(user_filters, enabled_sources, creds, proxy_override=None):
     all_projects = []
     proxy = proxy_override if proxy_override else get_active_proxy()
+    
+    # Safely handle keyword splitting by ensuring it's a string first
+    keywords = str(user_filters.get("keywords", "")).split(",")
+    # Clean up keywords
+    keywords = [k.strip() for k in keywords if k.strip()]
 
     if enabled_sources.get("linkedin"):
-        linkedin_projects = scrape_linkedin_posts(user_filters["keywords"].split(","))
+        linkedin_projects = scrape_linkedin_posts(keywords)
         all_projects.extend(linkedin_projects)
 
     if enabled_sources.get("gc_sites"):
@@ -30,18 +35,18 @@ def run_all_scrapers(user_filters, enabled_sources, creds, proxy_override=None):
             all_projects.extend(gc_projects)
 
     if enabled_sources.get("twitter"):
-        twitter_projects = scrape_twitter_posts(user_filters["keywords"].split(","))
+        twitter_projects = scrape_twitter_posts(keywords)
         all_projects.extend(twitter_projects)
 
     if enabled_sources.get("google_news"):
-        google_news_projects = scrape_google_news(user_filters["keywords"].split(","), proxy=proxy)
+        google_news_projects = scrape_google_news(keywords, proxy=proxy)
         all_projects.extend(google_news_projects)
 
     if enabled_sources.get("reddit"):
         subreddits = ["construction", "architecture", "engineering"]
         reddit_projects = scrape_reddit_posts(
             subreddits,
-            user_filters["keywords"].split(","),
+            keywords,
             proxy=proxy,
             praw_creds=PRAW_CREDS
         )
