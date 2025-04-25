@@ -16,7 +16,8 @@ logger = logging.getLogger(__name__)
 def scrape_reddit_posts(
     keywords: List[str], 
     subreddits: List[str] = ["construction", "architecture", "engineering"], 
-    limit: int = 10
+    limit: int = 10,
+    context_terms: List[str] = []
 ) -> List[Dict[str, Any]]:
     """
     Scrape Reddit for posts related to the given keywords.
@@ -33,8 +34,14 @@ def scrape_reddit_posts(
     
     for keyword in keywords:
         for subreddit in subreddits:
-            # Create search URL for the subreddit
-            encoded_query = urllib.parse.quote_plus(keyword)
+            # Create search URL for the subreddit with optional context terms
+            if context_terms:
+                context_string = " ".join(context_terms)
+                search_term = f"{keyword} {context_string}"
+            else:
+                search_term = keyword
+            
+            encoded_query = urllib.parse.quote_plus(search_term)
             url = f"https://www.reddit.com/r/{subreddit}/search/?q={encoded_query}&restrict_sr=1&sr_nsfw=&include_over_18=0"
             
             logger.info(f"Scraping Reddit r/{subreddit} for: {keyword}")

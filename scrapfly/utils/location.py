@@ -36,8 +36,8 @@ STATE_PATTERNS = [
     r'\b([A-Z]{2})\s+project\b'                  # "TX project"
 ]
 
-# Project type patterns for optional enhancement
-PROJECT_TYPES = {
+# Default project type patterns (can be overridden)
+DEFAULT_PROJECT_TYPES = {
     'hospital': [r'\bhospital\b', r'\bmedical center\b', r'\bhealthcare\b'],
     'tower': [r'\btower\b', r'\bskyscraper\b', r'\bhigh-rise\b'],
     'data_center': [r'\bdata center\b', r'\bdatacenter\b', r'\bserver\b'],
@@ -45,6 +45,9 @@ PROJECT_TYPES = {
     'large_area': [r'\b(\d+),?(\d+)?\s+(sq\.?\s*ft|square\s+feet|SF)\b'],
     'high_value': [r'\$(\d+\.?\d*)\s*million\b', r'\$(\d+\.?\d*)\s*billion\b']
 }
+
+# Active project types (can be updated at runtime)
+PROJECT_TYPES = DEFAULT_PROJECT_TYPES.copy()
 
 
 def extract_state(text: str) -> Optional[str]:

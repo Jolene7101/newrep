@@ -14,7 +14,12 @@ from .utils import normalize_data
 
 logger = logging.getLogger(__name__)
 
-def scrape_linkedin_posts(keywords: List[str] = None, post_urls: List[str] = None, limit: int = 10) -> List[Dict[str, Any]]:
+def scrape_linkedin_posts(
+    keywords: List[str] = None, 
+    post_urls: List[str] = None, 
+    limit: int = 10,
+    context_terms: List[str] = ["construction", "project"]
+) -> List[Dict[str, Any]]:
     """
     Scrape LinkedIn for posts related to the given keywords or directly via URLs.
     
@@ -101,8 +106,9 @@ def scrape_linkedin_posts(keywords: List[str] = None, post_urls: List[str] = Non
     
     # Then process keyword searches
     for keyword in keywords:
-        # Create search query with construction and fireproofing context
-        search_term = f"{keyword} construction project"
+        # Create search query with configurable context terms
+        context_string = " ".join(context_terms) if context_terms else ""
+        search_term = f"{keyword} {context_string}".strip()
         encoded_query = urllib.parse.quote_plus(search_term)
         url = f"https://www.linkedin.com/search/results/content/?keywords={encoded_query}&origin=GLOBAL_SEARCH_HEADER"
         
