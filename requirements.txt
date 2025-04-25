@@ -8,3 +8,5 @@ cloudscraper
 requests-html
 mitmproxy
 lxml[html_clean]
+python-dotenv
+scrapfly-sdk
