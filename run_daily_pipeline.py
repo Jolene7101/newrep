@@ -23,15 +23,20 @@ def init_db_if_missing():
         c.execute('''
         CREATE TABLE filters (
             email TEXT PRIMARY KEY,
-            valuation_min INTEGER,
-            min_stories INTEGER,
-            keywords TEXT
+            states TEXT,
+            keywords TEXT,
+            source_gc INTEGER,
+            source_linkedin INTEGER,
+            source_twitter INTEGER,
+            source_google_news INTEGER,
+            source_reddit INTEGER,
+            proxy TEXT
         )''')
         # Optional: Seed a test user
         c.execute('''
-        INSERT INTO filters (email, valuation_min, min_stories, keywords)
-        VALUES (?, ?, ?, ?)''', (
-            "test@example.com", 25, 3, "data center, fireproofing, steel"
+        INSERT INTO filters (email, states, keywords, source_gc, source_linkedin, source_twitter, source_google_news, source_reddit, proxy)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)''', (
+            "test@example.com", "TX,CA,NY", "data center, fireproofing, steel", 1, 1, 1, 1, 1, ""
         ))
         conn.commit()
         conn.close()
@@ -57,9 +62,8 @@ def run_daily_pipeline():
             continue
 
         user_filters = {
-            "valuation_min": row[1],
-            "min_stories": row[2],
-            "keywords": row[3]
+            "states": row[1] if row else "",
+            "keywords": row[2] if row else ""
         }
         print(f"✅ Found filters: {user_filters}")
 
