@@ -10,3 +10,6 @@ mitmproxy
 lxml[html_clean]
 python-dotenv
 scrapfly-sdk
+httpx
+argparse
+

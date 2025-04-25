@@ -29,6 +29,7 @@ try:
     from fireproofai.lead_sources.scrapfly.twitter_scraper import TwitterScraper
     from fireproofai.lead_sources.scrapfly.reddit_scraper import RedditScraper
     from fireproofai.lead_sources.scrapfly.google_news_scraper import GoogleNewsScraper
+    from fireproofai.lead_sources.scrapfly.gc_scraper import GCScraper
     SCRAPFLY_AVAILABLE = True
     logger.info("Scrapfly integration is available and will be used as primary scraper")
 except ImportError as e:
@@ -150,8 +151,26 @@ def run_all_scrapers(user_filters, enabled_sources, creds, proxy_override=None):
                 except Exception as e:
                     logger.error(f"Google News Scrapfly initialization failed: {e}")
             
-            # If we got results from Scrapfly and there are no GC sites to scrape, return results
-            if all_projects and not enabled_sources.get("gc_sites"):
+            # GC Sites scraping with Scrapfly
+            if enabled_sources.get("gc_sites"):
+                try:
+                    gc_scraper = GCScraper()
+                    for gc_name in ["JE Dunn", "Turner", "Skanska"]:
+                        try:
+                            logger.info(f"Scraping {gc_name} website with Scrapfly")
+                            results = gc_scraper.scrape_gc_site(gc_name)
+                            if results:
+                                logger.info(f"Found {len(results)} {gc_name} results with Scrapfly")
+                                all_projects.extend(results)
+                            else:
+                                logger.warning(f"No results found for {gc_name} with Scrapfly")
+                        except Exception as e:
+                            logger.error(f"{gc_name} Scrapfly scraping failed: {str(e)}")
+                except Exception as e:
+                    logger.error(f"GC Scrapfly initialization failed: {e}")
+                    
+            # If we got results from Scrapfly, return results
+            if all_projects:
                 logger.info(f"Scrapfly scraping completed successfully with {len(all_projects)} total results")
                 return all_projects
                 
@@ -170,15 +189,42 @@ def run_all_scrapers(user_filters, enabled_sources, creds, proxy_override=None):
         except Exception as e:
             logger.error(f"Direct LinkedIn scraping failed: {e}")
     
-    # GC Sites scraping (always use direct as it's not part of Scrapfly)
-    if enabled_sources.get("gc_sites"):
+    # GC Sites scraping using direct method as fallback
+    if enabled_sources.get("gc_sites") and (not SCRAPFLY_AVAILABLE or not any(p.get('source', '').startswith('GC:') for p in all_projects)):
         for gc_name in ["JE Dunn", "Turner", "Skanska"]:
             try:
-                gc_projects = scrape_gc_site(gc_name, proxy=proxy, ignore_ssl=True)
+                # Try to use safer approaches first with proper user agent and headers
+                gc_projects = scrape_gc_site(
+                    gc_name, 
+                    proxy=proxy, 
+                    ignore_ssl=False, 
+                    mode="requests"
+                )
+                
+                if not gc_projects:
+                    # If requests failed, try cloudscraper with proper SSL settings
+                    logger.info(f"Trying cloudscraper mode for {gc_name} with proper SSL")
+                    gc_projects = scrape_gc_site(
+                        gc_name, 
+                        proxy=proxy, 
+                        ignore_ssl=False, 
+                        mode="cloudscraper"
+                    )
+                    
+                if not gc_projects and gc_name == "Skanska":
+                    # Only as last resort for Skanska, try without SSL verification
+                    logger.warning(f"Trying last resort mode for {gc_name} without SSL verification")
+                    gc_projects = scrape_gc_site(
+                        gc_name, 
+                        proxy=proxy, 
+                        ignore_ssl=True, 
+                        mode="cloudscraper"
+                    )
+                    
                 all_projects.extend(gc_projects)
                 logger.info(f"GC site scraping for {gc_name} found {len(gc_projects)} results")
             except Exception as e:
-                logger.error(f"GC scraping failed for {gc_name}: {e}")
+                logger.error(f"GC scraping failed for {gc_name}: {str(e)}")
     
     # Twitter direct scraping
     if enabled_sources.get("twitter") and (not SCRAPFLY_AVAILABLE or not any(p.get('source') == 'twitter' for p in all_projects)):
